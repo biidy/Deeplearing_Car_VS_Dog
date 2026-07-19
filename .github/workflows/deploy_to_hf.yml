@@ -1,0 +1,57 @@
+name: Déploiement vers Hugging Face Spaces
+
+# Se déclenche uniquement sur push vers main touchant l'app ou le modèle.
+# Aucune étape d'entraînement ici : le modèle est déjà entraîné (Colab) et
+# committé dans models/ via Git LFS.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "models/**"
+      - "requirements.txt"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest   # runner CPU standard, gratuit — suffisant pour des tests légers
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true            # récupère aussi les fichiers Git LFS (le modèle)
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Installer les dépendances
+        run: pip install -r requirements.txt
+
+      - name: Lancer les tests unitaires
+        run: python -m pytest tests/ -v
+
+  deploy:
+    needs: test               # ne déploie que si les tests passent
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Push vers Hugging Face Spaces
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          pip install huggingface_hub
+          python - <<'EOF'
+          from huggingface_hub import HfApi
+          import os
+
+          api = HfApi(token=os.environ["HF_TOKEN"])
+          api.upload_folder(
+              folder_path=".",
+              repo_id="advertising-predict-pro/cat-dog-classifier",
+              repo_type="space",
+              allow_patterns=["app/**", "models/**", "requirements.txt"],
+          )
+          EOF
