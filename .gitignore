@@ -1,0 +1,24 @@
+# Données (trop volumineuses pour git)
+data/
+data_raw/
+*.zip
+
+# Modèles entraînés : versionnés via Git LFS dans models/ (voir .gitattributes)
+# donc PAS ignorés ici. On exclut seulement les checkpoints intermédiaires.
+*.checkpoint
+checkpoints/
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+venv/
+.env
+
+# MLrun
+.mlrun/
+mlrun-project/
+
+# Divers
+.DS_Store
+kaggle.json
